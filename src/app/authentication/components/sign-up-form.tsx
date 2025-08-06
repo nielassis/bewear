@@ -72,13 +72,9 @@ const SignUpForm = () => {
           router.push("/");
         },
         onError: (error) => {
-          if (error.error.code === "INVALID_EMAIL_OR_PASSWORD") {
-            toast.error("Email ou senha inválidos.");
-          }
-
           if (error.error.code === "USER_ALREADY_EXISTS") {
             toast.error("Email ja cadastrado.");
-            form.setError("email", {
+            return form.setError("email", {
               message: "Email ja cadastrado.",
             });
           }

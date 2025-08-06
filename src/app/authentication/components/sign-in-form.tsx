@@ -18,8 +18,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import z from "zod";
 
 const formSchema = z.object({
@@ -29,11 +32,33 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-function onSubmit(values: FormValues) {
-  console.log(values);
-}
-
 const SignInForm = () => {
+  const router = useRouter();
+
+  async function onSubmit(values: FormValues) {
+    await authClient.signIn.email({
+      email: values.email,
+      password: values.password,
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/");
+        },
+        onError: (ctx) => {
+          if (
+            ctx.error.code === "INVALID_EMAIL_OR_PASSWORD" ||
+            "USER_NOT_FOUND"
+          ) {
+            toast.error("Email ou senha inválidos.");
+            return form.setError("password", {
+              message: "Email ou senha inválidos.",
+            });
+          }
+          toast.error(ctx.error.message);
+        },
+      },
+    });
+  }
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
