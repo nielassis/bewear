@@ -10,6 +10,8 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import VariantSelector from "./components/variant-selector";
 import QuantitySelector from "./components/quantity-selector";
+import AddToCartButton from "./components/add-to-cart-button";
+import ProductActions from "./components/product-actions";
 
 interface ProductVariantPageProps {
   params: Promise<{ slug: string }>;
@@ -76,19 +78,7 @@ const ProductVariantPage = async ({ params }: ProductVariantPageProps) => {
           />
         </div>
 
-        <div className="px-5">
-          <QuantitySelector />
-        </div>
-
-        <div className="flex flex-col space-y-4 px-5">
-          <Button className="rounded-full" size="lg" variant="outline">
-            Adicionar a sacola
-          </Button>
-          <Button className="rounded-full" size="lg">
-            Comprar Agora
-          </Button>
-        </div>
-
+        <ProductActions productVariantId={productsVariant.id} />
         <div className="px-5">
           <p className="text-sm">{productsVariant.product.description}</p>
         </div>

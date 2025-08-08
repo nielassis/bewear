@@ -2,13 +2,13 @@
 
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { addProductToCardSchema, AddProductToCardSchema } from "./schema";
 import { db } from "@/db";
 import { cartItemTable, cartTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { addProductToCartSchema, AddProductToCartSchema } from "./schema";
 
-export const addProductToCard = async (data: AddProductToCardSchema) => {
-  addProductToCardSchema.parse(data);
+export const addProductToCard = async (data: AddProductToCartSchema) => {
+  addProductToCartSchema.parse(data);
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -19,7 +19,7 @@ export const addProductToCard = async (data: AddProductToCardSchema) => {
 
   const productVariant = await db.query.productVariantsTable.findFirst({
     where: (productVariant, { eq }) =>
-      eq(productVariant.id, data.productVariant),
+      eq(productVariant.id, data.productVariantId),
   });
 
   if (!productVariant) {
