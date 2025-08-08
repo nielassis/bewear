@@ -1,0 +1,67 @@
+"use server";
+
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { addProductToCardSchema, AddProductToCardSchema } from "./schema";
+import { db } from "@/db";
+import { cartItemTable, cartTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
+
+export const addProductToCard = async (data: AddProductToCardSchema) => {
+  addProductToCardSchema.parse(data);
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Not authenticated / Unauthorized");
+  }
+
+  const productVariant = await db.query.productVariantsTable.findFirst({
+    where: (productVariant, { eq }) =>
+      eq(productVariant.id, data.productVariant),
+  });
+
+  if (!productVariant) {
+    throw new Error("Product variant not found");
+  }
+
+  const cart = await db.query.cartTable.findFirst({
+    where: (cart, { eq }) => eq(cart.userId, session.user.id),
+  });
+
+  let cartId = cart?.id;
+
+  if (!cartId) {
+    const [newCart] = await db
+      .insert(cartTable)
+      .values({
+        userId: session.user.id,
+      })
+      .returning();
+    cartId = newCart.id;
+  }
+
+  const cartItem = await db.query.cartItemTable.findFirst({
+    where: (cartItem, { eq }) =>
+      eq(cartItem.cartId, cartId) &&
+      eq(cartItem.productVariantId, productVariant.id),
+  });
+
+  if (cartItem) {
+    await db
+      .update(cartItemTable)
+      .set({
+        quantity: cartItem.quantity + data.quantity,
+      })
+      .where(eq(cartItemTable.id, cartItem.id));
+
+    return;
+  }
+
+  await db.insert(cartItemTable).values({
+    cartId,
+    productVariantId: productVariant.id,
+    quantity: data.quantity,
+  });
+};
